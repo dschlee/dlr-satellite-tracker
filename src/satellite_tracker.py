@@ -11,6 +11,9 @@ upper_threshold = 255
 buffer = 64
 pts = deque(maxlen=buffer)
 
+fps = cap.get(cv2.CAP_PROP_FPS)
+delay = int(1000 / fps)
+
 # Check if video opened successfully
 if cap.isOpened() == False:
     print("Error opening video file")
@@ -23,7 +26,7 @@ while cap.isOpened():
 
     # if we are viewing a video and we did not grab a frame,
     # then we have reached the end of the video
-    if frame is None:
+    if frame is None or not ret:
         break
 
     # resize the frame, blur it, and convert it to the Grayscale color space
@@ -174,21 +177,14 @@ while cap.isOpened():
             thickness=thickness,
         )
 
-    if ret == True:
-        # Display the resulting frame
-        cv2.imshow("Frame", frame)
+    # Display the resulting frame
+    cv2.imshow("Video Playback", frame)
 
-        # Press Q on keyboard to exit
-        if cv2.waitKey(25) & 0xFF == ord("q"):
-            break
-
-    # Break the loop
-    else:
+    # Press Q on keyboard to exit
+    if cv2.waitKey(delay) & 0xFF == ord("q"):
         break
 
-
-# When everything done, release the video capture object
+# Release the video capture object
+# and close all OpenCV windows
 cap.release()
-
-# Closes all the frames
 cv2.destroyAllWindows()

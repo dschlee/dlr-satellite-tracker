@@ -87,12 +87,16 @@ while cap.isOpened():
             frame, pt1=pts[i - 1], pt2=pts[i], color=(0, 0, 255), thickness=thickness
         )
 
-    # show the frame to our screen
-    cv2.imshow("Frame", frame)
-    key = cv2.waitKey(1) & 0xFF
+    if ret == True:
+        # Display the resulting frame
+        cv2.imshow("Frame", frame)
 
-    # if the 'q' key is pressed, stop the loop
-    if key == ord("q"):
+        # Press Q on keyboard to exit
+        if cv2.waitKey(25) & 0xFF == ord("q"):
+            break
+
+    # Break the loop
+    else:
         break
 
 

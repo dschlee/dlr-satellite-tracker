@@ -2,14 +2,6 @@ from collections import deque
 import numpy as np
 import cv2
 import imutils
-import time
-
-
-# def calculate_distance(p1, p2):
-#     """p1 and p2 in format (x1,y1) and (x2,y2) tuples"""
-#     distance = ((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2) ** 0.5
-#     return distance
-
 
 # Create a VideoCapture object and read from input file
 cap = cv2.VideoCapture("./data/DLR_Satellite_Tracking_2.mp4")

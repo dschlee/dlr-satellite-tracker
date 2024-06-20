@@ -4,12 +4,19 @@ import cv2
 import imutils
 
 # Create a VideoCapture object and read from input file
-cap = cv2.VideoCapture("./data/DLR_Satellite_Tracking_2.mp4")
+cap = cv2.VideoCapture("./data/DLR_Satellite_Tracking_1.mp4")
 
 lower_threshold = 160
 upper_threshold = 255
 buffer = 64
 pts = deque(maxlen=buffer)
+distance_satellite_to_center_deq = deque([])
+satellite_brightness_deq = deque([])
+avg_window_brightness_deq = deque([])
+
+distance_satellite_to_center_avg = None
+satellite_brightness_avg = None
+avg_window_brightness_avg = None
 
 fps = cap.get(cv2.CAP_PROP_FPS)
 delay = int(1000 / fps)
@@ -52,8 +59,8 @@ while cap.isOpened():
 
     cv2.putText(
         img=frame,
-        text="Distance to frame center:",
-        org=(20, 30),
+        text="Frame",
+        org=(380, 30),
         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
         fontScale=0.6,
         color=(0, 255, 255),
@@ -63,8 +70,8 @@ while cap.isOpened():
 
     cv2.putText(
         img=frame,
-        text="Brightness satellite:",
-        org=(20, 130),
+        text="Avg",
+        org=(480, 30),
         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
         fontScale=0.6,
         color=(0, 255, 255),
@@ -74,8 +81,52 @@ while cap.isOpened():
 
     cv2.putText(
         img=frame,
-        text="Brightness avg:",
-        org=(20, 230),
+        text="Distance to center [pixel]",
+        org=(20, 60),
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        fontScale=0.6,
+        color=(0, 255, 255),
+        thickness=1,
+        lineType=cv2.LINE_4,
+    )
+
+    cv2.putText(
+        img=frame,
+        text=f"{distance_satellite_to_center_avg}",
+        org=(480, 60),
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        fontScale=0.6,
+        color=(0, 255, 255),
+        thickness=1,
+        lineType=cv2.LINE_4,
+    )
+
+    cv2.putText(
+        img=frame,
+        text="Satellite brightness [intensity]",
+        org=(20, 90),
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        fontScale=0.6,
+        color=(0, 255, 255),
+        thickness=1,
+        lineType=cv2.LINE_4,
+    )
+
+    cv2.putText(
+        img=frame,
+        text=f"{satellite_brightness_avg}",
+        org=(480, 90),
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        fontScale=0.6,
+        color=(0, 255, 255),
+        thickness=1,
+        lineType=cv2.LINE_4,
+    )
+
+    cv2.putText(
+        img=frame,
+        text="Avg window brightness [intensity]",
+        org=(20, 120),
         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
         fontScale=0.6,
         color=(0, 255, 255),
@@ -84,14 +135,28 @@ while cap.isOpened():
     )
 
     # caluclate the average brightness of the frame (excluding the black borders)
-    avg_brightness_per_row = np.mean(frame[:, 278:724], axis=0)
-    avg_brightness = np.mean(avg_brightness_per_row, axis=0)
-    avg_brightness, _, _ = tuple(avg_brightness.astype(int))
+    avg_window_brightness_per_row = np.mean(frame[:, 278:724], axis=0)
+    avg_window_brightness_frame = np.mean(avg_window_brightness_per_row, axis=0)
+    avg_window_brightness_frame, _, _ = tuple(avg_window_brightness_frame.astype(int))
+
+    avg_window_brightness_deq.append(avg_window_brightness_frame)
+    avg_window_brightness_avg = int(np.mean(avg_window_brightness_deq))
 
     cv2.putText(
         img=frame,
-        text=f"{avg_brightness}",
-        org=(20, 260),
+        text=f"{avg_window_brightness_frame}",
+        org=(380, 120),
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        fontScale=0.6,
+        color=(0, 255, 255),
+        thickness=1,
+        lineType=cv2.LINE_4,
+    )
+
+    cv2.putText(
+        img=frame,
+        text=f"{avg_window_brightness_avg}",
+        org=(480, 120),
         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
         fontScale=0.6,
         color=(0, 255, 255),
@@ -111,7 +176,12 @@ while cap.isOpened():
         if radius > 1:
 
             # get the brightness of the satellite center
-            satellite_brightness, _, _ = frame[satellite_center[1]][satellite_center[0]]
+            satellite_brightness_frame, _, _ = frame[satellite_center[1]][
+                satellite_center[0]
+            ]
+
+            satellite_brightness_deq.append(satellite_brightness_frame)
+            satellite_brightness_avg = int(np.mean(satellite_brightness_deq))
 
             # draw the circle and centroid on the frame,
             # then update the list of tracked points
@@ -132,15 +202,20 @@ while cap.isOpened():
 
             # calculate the distance of the satellite center to the frame center
             # and display it the frame
-            distance_satellite_to_frame_center = (
+            distance_satellite_to_center_frame = (
                 (satellite_center[0] - frame_center[0]) ** 2
                 + (satellite_center[1] - frame_center[1]) ** 2
             ) ** 0.5
 
+            distance_satellite_to_center_deq.append(distance_satellite_to_center_frame)
+            distance_satellite_to_center_avg = int(
+                np.mean(distance_satellite_to_center_deq)
+            )
+
             cv2.putText(
                 img=frame,
-                text=f"{int(distance_satellite_to_frame_center)} pts",
-                org=(20, 60),
+                text=f"{int(distance_satellite_to_center_frame)}",
+                org=(380, 60),
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=0.6,
                 color=(0, 255, 255),
@@ -150,8 +225,8 @@ while cap.isOpened():
 
             cv2.putText(
                 img=frame,
-                text=f"{satellite_brightness}",
-                org=(20, 160),
+                text=f"{satellite_brightness_frame}",
+                org=(380, 90),
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=0.6,
                 color=(0, 255, 255),
@@ -188,3 +263,9 @@ while cap.isOpened():
 # and close all OpenCV windows
 cap.release()
 cv2.destroyAllWindows()
+
+print(
+    f"Avg satellite distance to frame center: {distance_satellite_to_center_avg} [pixel]"
+)
+print(f"Avg satellite brightness: {satellite_brightness_avg} [intensity]")
+print(f"Avg window brightness: {avg_window_brightness_avg} [intensity]")

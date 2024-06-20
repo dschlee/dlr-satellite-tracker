@@ -1,10 +1,20 @@
 from collections import deque
+from pathlib import Path
 import numpy as np
 import cv2
 import imutils
 
+# Adjust this value to select the different video files
+video_file_nr = 3
+
+file_path = f"./data/DLR_Satellite_Tracking_{video_file_nr}.mp4"
+file_name = Path(file_path).stem
+
+print(file_path)
+print(file_name)
+
 # Create a VideoCapture object and read from input file
-cap = cv2.VideoCapture("./data/DLR_Satellite_Tracking_1.mp4")
+cap = cv2.VideoCapture(file_path)
 
 lower_threshold = 160
 upper_threshold = 255
@@ -24,6 +34,15 @@ delay = int(1000 / fps)
 # Check if video opened successfully
 if cap.isOpened() == False:
     print("Error opening video file")
+
+# size = (frame_width, frame_height)
+
+out = cv2.VideoWriter(
+    f"./data/{file_name}_output.mp4",
+    cv2.VideoWriter_fourcc(*"MP4V"),
+    20.0,
+    (1000, 562),
+)
 
 # Read until video is completed
 while cap.isOpened():
@@ -252,6 +271,9 @@ while cap.isOpened():
             thickness=thickness,
         )
 
+    # Write the frame into the output file
+    out.write(frame)
+
     # Display the resulting frame
     cv2.imshow("Video Playback", frame)
 
@@ -262,6 +284,7 @@ while cap.isOpened():
 # Release the video capture object
 # and close all OpenCV windows
 cap.release()
+out.release()
 cv2.destroyAllWindows()
 
 print(

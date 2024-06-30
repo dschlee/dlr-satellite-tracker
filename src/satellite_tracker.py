@@ -1,6 +1,7 @@
 from collections import deque
 from pathlib import Path
 import numpy as np
+import matplotlib.pyplot as plt
 import cv2
 import imutils
 
@@ -9,9 +10,6 @@ video_file_nr = 3
 
 file_path = f"./data/DLR_Satellite_Tracking_{video_file_nr}.mp4"
 file_name = Path(file_path).stem
-
-print(file_path)
-print(file_name)
 
 # Create a VideoCapture object and read from input file
 cap = cv2.VideoCapture(file_path)
@@ -37,12 +35,12 @@ if cap.isOpened() == False:
 
 # size = (frame_width, frame_height)
 
-out = cv2.VideoWriter(
-    f"./data/{file_name}_output.mp4",
-    cv2.VideoWriter_fourcc(*"MP4V"),
-    20.0,
-    (1000, 562),
-)
+# out = cv2.VideoWriter(
+#     f"./data/{file_name}_output.mp4",
+#     cv2.VideoWriter_fourcc(*"MP4V"),
+#     20.0,
+#     (1000, 562),
+# )
 
 # Read until video is completed
 while cap.isOpened():
@@ -272,7 +270,7 @@ while cap.isOpened():
         )
 
     # Write the frame into the output file
-    out.write(frame)
+    # out.write(frame)
 
     # Display the resulting frame
     cv2.imshow("Video Playback", frame)
@@ -284,7 +282,7 @@ while cap.isOpened():
 # Release the video capture object
 # and close all OpenCV windows
 cap.release()
-out.release()
+# out.release()
 cv2.destroyAllWindows()
 
 print(
@@ -292,3 +290,49 @@ print(
 )
 print(f"Avg satellite brightness: {satellite_brightness_avg} [intensity]")
 print(f"Avg window brightness: {avg_window_brightness_avg} [intensity]")
+
+
+# Create plots
+distance_satellite_to_center_arr = np.asarray(distance_satellite_to_center_deq)
+satellite_brightness_arr = np.asarray(satellite_brightness_deq)
+avg_window_brightness_arr = np.asarray(avg_window_brightness_deq)
+
+frames_satellite_visible = np.arange(1, len(distance_satellite_to_center_arr) + 1)
+frames_window_open = np.arange(1, len(avg_window_brightness_arr) + 1)
+
+fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(10, 8))
+
+ax_distance = ax[0]
+ax_satellite_brightness = ax[1]
+ax_window_brightness = ax[2]
+
+ax_distance.set_title("Distance to center [pixel]")
+ax_satellite_brightness.set_title("Satellite brightness [intensity]")
+ax_window_brightness.set_title("Avg window brightness [intensity]")
+
+ax_distance.set_xlabel("frames [-]")
+ax_distance.set_ylabel("distance [pixel]")
+ax_satellite_brightness.set_xlabel("frames [-]")
+ax_satellite_brightness.set_ylabel("brightness [intensity]")
+ax_window_brightness.set_xlabel("frames [-]")
+ax_window_brightness.set_ylabel("brightness [intensity]")
+
+ax_satellite_brightness.set_ylim(0, 255)
+ax_window_brightness.set_ylim(0, 255)
+
+ax_distance.plot(
+    frames_satellite_visible,
+    distance_satellite_to_center_arr,
+)
+ax_satellite_brightness.plot(
+    frames_satellite_visible,
+    satellite_brightness_arr,
+)
+ax_window_brightness.plot(
+    frames_window_open,
+    avg_window_brightness_arr,
+)
+
+fig.tight_layout()
+# plt.savefig(f"./data/{file_name}_output.pdf", bbox_inches="tight")
+plt.show()
